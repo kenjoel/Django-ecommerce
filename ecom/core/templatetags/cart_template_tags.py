@@ -1,6 +1,6 @@
 from django import template
 
-from ecom.core.models import Order
+from ..models import Order
 
 register = template.Library()
 
