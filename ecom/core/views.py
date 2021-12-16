@@ -1,6 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView, DetailView
-from .models import Item
+from .models import Item, OrderItem, Order
 
 
 # Create your views here.
@@ -16,9 +16,13 @@ class ItemDetailView(DetailView):
     template_name = 'product.html'
 
 
-def checkout(request):
-    return render(request, 'checkout-page.html')
+def add_to_cart(request, slug):
+    item = get_object_or_404(Item, slug=slug)
+    order_item = OrderItem.objects.create(item=item)
+    order_qs = Order.objects.filter(user=request.user, ordered=False)
 
-
-def products(request):
-    return render(request, 'product.html')
+    if order_qs.exists():
+        order = order_qs[0]
+        if order.items.filter(item__slug=item.slug).exists():
+            order_item.quantity += 1
+            order_item.save()
