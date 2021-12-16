@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'core'
+    'core',
+    'crispy_forms',
 ]
 
 MIDDLEWARE = [
@@ -134,3 +135,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media_root')
 
 
 SITE_ID = 1
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
+LOGIN_REDIRECT_URL = '/'
