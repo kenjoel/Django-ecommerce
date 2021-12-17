@@ -1,3 +1,5 @@
+import stripe
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -9,6 +11,22 @@ from django.views.generic import ListView, DetailView
 
 from .forms import CheckoutForm, CouponForm
 from .models import Item, OrderItem, Order, BillingAddress
+
+
+import stripe
+
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
+# `source` is obtained with Stripe.js; see https://stripe.com/docs/payments/accept-a-payment-charges#web-create-token
+stripe.Charge.create(
+  amount=2000,
+  currency="usd",
+  source="tok_mastercard",
+  description="My First Test Charge (created for API docs)",
+)
+
+
 
 
 class HomeView(ListView):
@@ -142,7 +160,7 @@ class CheckoutView(View):
                     street_address=street_address,
                     apartment_address=apartment_address,
                     country=country,
-                    zipcode=zip
+                    zip=zipcode
                 )
                 billing_address.save()
                 order.billing_address = billing_address
@@ -171,3 +189,49 @@ class Payment(View):
             'order': order
         }
         return render(self.request, 'payment-page.html', context)
+
+    def post(self, *args, **kwargs):
+        order = Order.objects.get(user=self.request.user, ordered=False)
+        token = self.request.POST.get('stripeToken')
+        amount = int(order.get_total() * 100)
+        try:
+            charge = stripe.Charge.create(
+                amount=amount,
+                currency="usd",
+                source=token
+            )
+            order.ordered = True
+            payment = Payment()
+            payment.stripe_charge_id = charge['id']
+            payment.user = self.request.user
+            payment.amount = order.get_total()
+            payment.save()
+        except stripe.error.CardError as e:
+            body = e.json_body
+            err = body.get('error', {})
+            messages.warning(self.request, f"{err.get('message')}")
+            return redirect('core:checkout')
+        except stripe.error.RateLimitError as e:
+            messages.warning(self.request, "Rate limit error")
+            return redirect('core:checkout')
+        except stripe.error.InvalidRequestError as e:
+            messages.warning(self.request, "Invalid parameters")
+            return redirect('core:checkout')
+        except stripe.error.AuthenticationError as e:
+            messages.warning(self.request, "Not authenticated")
+            return redirect('core:checkout')
+        except stripe.error.APIConnectionError as e:
+            messages.warning(self.request, "Network error")
+            return redirect('core:checkout')
+        except stripe.error.StripeError as e:
+            messages.warning(self.request, "Something went wrong. You were not charged. Please try again")
+            return redirect('core:checkout')
+        except Exception as e:
+            messages.warning(self.request, "A serious error occurred. We have been notified")
+            return redirect('core:checkout')
+        messages.success(self.request, "Payment successful")
+        return redirect('core:checkout')
+
+
+
+
