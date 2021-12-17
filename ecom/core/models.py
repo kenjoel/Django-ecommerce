@@ -80,7 +80,6 @@ class Order(models.Model):
     payment = models.ForeignKey(
         "Payment", on_delete=models.SET_NULL, blank=True, null=True)
 
-
     def __str__(self):
         return self.user.username
 

@@ -226,7 +226,7 @@ button:hover {
 
 <script src="https://js.stripe.com/v3/"></script>
 <script nonce="">  // Create a Stripe client.
-  var stripe = Stripe('{{STRIPE_PUBLIC_KEY}}');
+  var stripe = Stripe("pk_test_51K6tTMDCMyBp4fywEgHpdA3cJMH9U9JgLRfjTRRdAcRTFRlmB9ASQU5opWe2w2C7jAvZVacy4fTpWEmEGk67taPJ003WXuRI14");
 
   // Create an instance of Elements.
   var elements = stripe.elements();
@@ -299,6 +299,7 @@ button:hover {
   var currentCardForm = $('.current-card-form');
   var newCardForm = $('.new-card-form');
   var use_default_card = document.querySelector("input[name=use_default_card]");
+  console.log(use_default_card.value);
   use_default_card.addEventListener('change', function() {
     if (this.checked) {
       newCardForm.hide();

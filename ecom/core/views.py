@@ -10,19 +10,11 @@ from django.views import View
 from django.views.generic import ListView, DetailView
 
 from .forms import CheckoutForm, CouponForm
-from .models import Item, OrderItem, Order, BillingAddress
+from .models import Item, OrderItem, Order, BillingAddress, Payment
 
 import stripe
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
-
-# `source` is obtained with Stripe.js; see https://stripe.com/docs/payments/accept-a-payment-charges#web-create-token
-stripe.Charge.create(
-    amount=2000,
-    currency="usd",
-    source="tok_mastercard",
-    description="My First Test Charge (created for API docs)",
-)
 
 
 class HomeView(ListView):
@@ -178,7 +170,7 @@ class CheckoutView(View):
             # return redirect('core:checkout')
 
 
-class Payment(View):
+class PaymentView(View):
     def get(self, *args, **kwargs):
         order = Order.objects.get(user=self.request.user, ordered=False)
         context = {
@@ -189,6 +181,7 @@ class Payment(View):
     def post(self, *args, **kwargs):
         order = Order.objects.get(user=self.request.user, ordered=False)
         token = self.request.POST.get('stripeToken')
+        print(token)
         amount = int(order.get_total() * 100)
         try:
             charge = stripe.Charge.create(
