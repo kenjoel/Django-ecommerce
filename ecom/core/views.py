@@ -8,7 +8,7 @@ from django.views import View
 from django.views.generic import ListView, DetailView
 
 from .forms import CheckoutForm, CouponForm
-from .models import Item, OrderItem, Order
+from .models import Item, OrderItem, Order, BillingAddress
 
 
 class HomeView(ListView):
@@ -112,7 +112,6 @@ def remove_single_item(request, slug):
                 return redirect('core:order_summary')
 
 
-@login_required
 class CheckoutView(View):
     def get(self, *args, **kwargs):
         try:
@@ -137,18 +136,38 @@ class CheckoutView(View):
                 street_address = form.cleaned_data.get('street_address')
                 apartment_address = form.cleaned_data.get('apartment_address')
                 country = form.cleaned_data.get('country')
-                zip = form.cleaned_data.get('zip')
+                zipcode = form.cleaned_data.get('zip')
+                billing_address = BillingAddress(
+                    user=self.request.user,
+                    street_address=street_address,
+                    apartment_address=apartment_address,
+                    country=country,
+                    zipcode=zip
+                )
+                billing_address.save()
+                order.billing_address = billing_address
+                order.save()
+                return redirect('core:payment')
 
         except ObjectDoesNotExist:
             messages.info(self.request, "You do not have an active order")
             return redirect("core:checkout")
-        if form.is_valid():
-            order.update_address(
-                street_address=street_address,
-                apartment_address=apartment_address,
-                country=country,
-                zip=zip
-            )
-            return redirect('core:payment')
-        messages.info(self.request, "Please fill in the required fields")
-        return redirect('core:checkout')
+            # if form.is_valid():
+            #     order.update_address(
+            #         street_address=street_address,
+            #         apartment_address=apartment_address,
+            #         country=country,
+            #         zip=zip
+            #     )
+            #     return redirect('core:payment')
+            # messages.info(self.request, "Please fill in the required fields")
+            # return redirect('core:checkout')
+
+
+class Payment(View):
+    def get(self, *args, **kwargs):
+        order = Order.objects.get(user=self.request.user, ordered=False)
+        context = {
+            'order': order
+        }
+        return render(self.request, 'payment-page.html', context)
