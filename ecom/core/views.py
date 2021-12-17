@@ -12,21 +12,17 @@ from django.views.generic import ListView, DetailView
 from .forms import CheckoutForm, CouponForm
 from .models import Item, OrderItem, Order, BillingAddress
 
-
 import stripe
-
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # `source` is obtained with Stripe.js; see https://stripe.com/docs/payments/accept-a-payment-charges#web-create-token
 stripe.Charge.create(
-  amount=2000,
-  currency="usd",
-  source="tok_mastercard",
-  description="My First Test Charge (created for API docs)",
+    amount=2000,
+    currency="usd",
+    source="tok_mastercard",
+    description="My First Test Charge (created for API docs)",
 )
-
-
 
 
 class HomeView(ListView):
@@ -231,7 +227,3 @@ class Payment(View):
             return redirect('core:checkout')
         messages.success(self.request, "Payment successful")
         return redirect('core:checkout')
-
-
-
-
