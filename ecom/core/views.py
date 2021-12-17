@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView, DetailView
 
+from .forms import CheckoutForm, CouponForm
 from .models import Item, OrderItem, Order
 
 
@@ -32,6 +33,7 @@ class OrderSummaryView(LoginRequiredMixin, View):
 class ItemDetailView(DetailView):
     model = Item
     template_name = 'product.html'
+
 
 @login_required
 def add_to_cart(request, slug):
@@ -63,7 +65,6 @@ def add_to_cart(request, slug):
         return redirect('core:order_summary')
 
 
-
 @login_required
 def remove_from_cart(request, slug):
     item = get_object_or_404(Item, slug=slug)
@@ -85,8 +86,9 @@ def remove_from_cart(request, slug):
             messages.info(request, "This item was Not in your cart")
             return redirect('core:product', slug=slug)
 
+
 @login_required
-def remover_single_item(request, slug):
+def remove_single_item(request, slug):
     item = get_object_or_404(Item, slug=slug)
     order_qs = Order.objects.filter(user=request.user, ordered=False)
 
@@ -108,3 +110,45 @@ def remover_single_item(request, slug):
                 order_item.delete()
                 messages.info(request, "This item was Removed from your cart")
                 return redirect('core:order_summary')
+
+
+@login_required
+class CheckoutView(View):
+    def get(self, *args, **kwargs):
+        try:
+            order = Order.objects.get(user=self.request.user, ordered=False)
+            form = CheckoutForm()
+            context = {
+                'form': form,
+                'couponform': CouponForm(),
+                'order': order,
+                'DISPLAY_COUPON_FORM': True
+            }
+            return render(self.request, 'checkout-page.html', context)
+        except ObjectDoesNotExist:
+            messages.info(self.request, "You do not have an active order")
+            return redirect("core:checkout")
+
+    def post(self, *args, **kwargs):
+        form = CheckoutForm(self.request.POST or None)
+        try:
+            order = Order.objects.get(user=self.request.user, ordered=False)
+            if form.is_valid():
+                street_address = form.cleaned_data.get('street_address')
+                apartment_address = form.cleaned_data.get('apartment_address')
+                country = form.cleaned_data.get('country')
+                zip = form.cleaned_data.get('zip')
+
+        except ObjectDoesNotExist:
+            messages.info(self.request, "You do not have an active order")
+            return redirect("core:checkout")
+        if form.is_valid():
+            order.update_address(
+                street_address=street_address,
+                apartment_address=apartment_address,
+                country=country,
+                zip=zip
+            )
+            return redirect('core:payment')
+        messages.info(self.request, "Please fill in the required fields")
+        return redirect('core:checkout')
