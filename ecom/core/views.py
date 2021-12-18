@@ -13,7 +13,7 @@ from django.views import View
 from django.views.generic import ListView, DetailView
 
 from .forms import CheckoutForm, CouponForm, RefundForm
-from .models import Item, OrderItem, Order, BillingAddress, Payment, Coupon
+from .models import Item, OrderItem, Order, BillingAddress, Payment, Coupon, Refund
 
 import stripe
 
@@ -280,6 +280,7 @@ class AddCoupon(View):
                 messages.info(self.request, "This coupon does not exist")
                 return redirect("core:checkout")
 
+
 class RequestRefund(View):
     def get(self, *args, **kwargs):
         form = RefundForm()
@@ -287,6 +288,7 @@ class RequestRefund(View):
             'form': form
         }
         return render(self.request, "request-refund.html", context)
+
     def post(self):
         form = RefundForm(self.request.POST)
         if form.is_valid():
@@ -301,3 +303,7 @@ class RequestRefund(View):
                 messages.info(self.request, "This order does not exist")
                 return redirect("core:request-refund")
             refund = Refund()
+            refund.order = order
+            refund.reason = message
+            refund.email = email
+            refund.save()
