@@ -121,6 +121,13 @@ def remove_single_item(request, slug):
                 return redirect('core:order_summary')
 
 
+def is_valid_form(values):
+    for field in values:
+        if field == '':
+            return False
+    return True
+
+
 class CheckoutView(View):
     def get(self, *args, **kwargs):
         try:
@@ -132,6 +139,25 @@ class CheckoutView(View):
                 'order': order,
                 'DISPLAY_COUPON_FORM': True
             }
+
+            shipping_address_qs = Address.objects.filter(
+                user=self.request.user,
+                address_type='S',
+                default=True
+            )
+            if shipping_address_qs.exists():
+                context.update(
+                    {'default_shipping_address': shipping_address_qs[0]})
+
+            billing_address_qs = Address.objects.filter(
+                user=self.request.user,
+                address_type='B',
+                default=True
+            )
+            if billing_address_qs.exists():
+                context.update(
+                    {'default_billing_address': billing_address_qs[0]})
+
             return render(self.request, 'checkout-page.html', context)
         except ObjectDoesNotExist:
             messages.info(self.request, "You do not have an active order")
@@ -142,20 +168,56 @@ class CheckoutView(View):
         try:
             order = Order.objects.get(user=self.request.user, ordered=False)
             if form.is_valid():
-                street_address = form.cleaned_data.get('street_address')
-                apartment_address = form.cleaned_data.get('apartment_address')
-                country = form.cleaned_data.get('country')
-                zipcode = form.cleaned_data.get('zip')
-                payment_options = form.cleaned_data.get('payment_options')
-                print(payment_options)
-                billing_address = Address(
-                    user=self.request.user,
-                    street_address=street_address,
-                    apartment_address=apartment_address,
-                    country=country,
-                    zip=zipcode,
-                    address_type='B'
-                )
+
+                use_default_shipping = form.cleaned_data.get(
+                    'use_default_shipping')
+                if use_default_shipping:
+                    print("Using the defualt shipping address")
+                    address_qs = Address.objects.filter(
+                        user=self.request.user,
+                        address_type='S',
+                        default=True
+                    )
+                    if address_qs.exists():
+                        shipping_address = address_qs[0]
+                        order.shipping_address = shipping_address
+                        order.save()
+                    else:
+                        messages.info(
+                            self.request, "No default shipping address available")
+                        return redirect('core:checkout')
+
+                shipping_address = form.cleaned_data.get('shipping_address')
+                shipping_address2 = form.cleaned_data.get(
+                    'shipping_address2')
+                shipping_country = form.cleaned_data.get(
+                    'shipping_country')
+                shipping_zip = form.cleaned_data.get('shipping_zip')
+
+                if is_valid_form([shipping_address, shipping_country, shipping_zip]):
+                    shipping_address = Address(
+                        user=self.request.user,
+                        street_address=shipping_address,
+                        apartment_address=shipping_address2,
+                        country=shipping_country,
+                        zip=shipping_zip,
+                        address_type='S'
+                    )
+                    shipping_address.save()
+
+                    order.shipping_address = shipping_address
+                    order.save()
+
+                    set_default_shipping = form.cleaned_data.get(
+                        'set_default_shipping')
+                    if set_default_shipping:
+                        shipping_address.default = True
+                        shipping_address.save()
+
+                else:
+                    messages.info(
+                        self.request, "Please fill in the required shipping address fields")
+
                 billing_address.save()
                 order.billing_address = billing_address
                 order.save()
