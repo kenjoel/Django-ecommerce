@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import HomeView, ItemDetailView, add_to_cart, remove_from_cart, OrderSummaryView, remove_single_item, \
-    CheckoutView, PaymentView
+    CheckoutView, PaymentView, AddCoupon
 
 app_name = 'core'
 urlpatterns = [
@@ -13,6 +13,7 @@ urlpatterns = [
     path('remove_single_item_from_cart/<slug>/', remove_single_item, name='remove_single_item_from_cart'),
     path('checkout/', CheckoutView.as_view(), name='checkout'),
     path("payment/<payment_option>/", PaymentView.as_view(), name="payment"),
+    path('coupons/', AddCoupon.as_view(), name='coupons'),
 
     # path('<int:pk>/', item_detail, name='item_detail'),
 ]
