@@ -13,7 +13,7 @@ from django.views import View
 from django.views.generic import ListView, DetailView
 
 from .forms import CheckoutForm, CouponForm, RefundForm
-from .models import Item, OrderItem, Order, BillingAddress, Payment, Coupon, Refund
+from .models import Item, OrderItem, Order, Address, Payment, Coupon, Refund
 
 import stripe
 
@@ -148,12 +148,13 @@ class CheckoutView(View):
                 zipcode = form.cleaned_data.get('zip')
                 payment_options = form.cleaned_data.get('payment_options')
                 print(payment_options)
-                billing_address = BillingAddress(
+                billing_address = Address(
                     user=self.request.user,
                     street_address=street_address,
                     apartment_address=apartment_address,
                     country=country,
-                    zip=zipcode
+                    zip=zipcode,
+                    address_type='B'
                 )
                 billing_address.save()
                 order.billing_address = billing_address
