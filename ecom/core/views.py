@@ -286,16 +286,6 @@ class CheckoutView(View):
         except ObjectDoesNotExist:
             messages.info(self.request, "You do not have an active order")
             return redirect("core:home")
-            # if form.is_valid():
-            #     order.update_address(
-            #         street_address=street_address,
-            #         apartment_address=apartment_address,
-            #         country=country,
-            #         zip=zip
-            #     )
-            #     return redirect('core:payment')
-            # messages.info(self.request, "Please fill in the required fields")
-            # return redirect('core:checkout')
 
 
 def create_ref_code():
@@ -354,12 +344,12 @@ class PaymentView(View):
 
             amount = int(order.get_total() * 100)
             try:
-                if use_default:
-                        charge = stripe.Charge.create(
-                            amount=amount,
-                            currency="usd",
-                            customer=userprofile.stripe_customer_id
-                        )
+                if use_default or save:
+                    charge = stripe.Charge.create(
+                        amount=amount,
+                        currency="usd",
+                        customer=userprofile.stripe_customer_id
+                    )
                 else:
                     charge = stripe.Charge.create(
                         amount=amount,

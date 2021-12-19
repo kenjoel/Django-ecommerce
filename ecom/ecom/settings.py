@@ -29,7 +29,7 @@ STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["kenjoeldjangoecommerce"]
 
 # Application definition
 
@@ -84,8 +84,12 @@ WSGI_APPLICATION = 'ecom.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'root',
+        'USER': 'root',
+        'PASSWORD': 'root',
+        'HOST': 'localhost',  # change this to db when using docker compose up
+        'PORT': '5432'
     }
 }
 
@@ -126,7 +130,7 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-'''Athentication Backends'''
+'''Authentication Backends'''
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend'
@@ -141,6 +145,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media_root')
 
 
 SITE_ID = 1
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+ACCOUNT_EMAIL_VERIFICATION = "none"
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 LOGIN_REDIRECT_URL = '/'

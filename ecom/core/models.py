@@ -165,4 +165,4 @@ def user_receiver(sender, instance, created, *args, **kwargs):
         user_profile = UserProfile.objects.create(user=instance)
 
 
-post_save(user_receiver, sender=settings.AUTH_USER_MODEL)
+post_save.connect(user_receiver, sender=settings.AUTH_USER_MODEL)
