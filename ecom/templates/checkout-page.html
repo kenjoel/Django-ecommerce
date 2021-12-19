@@ -149,6 +149,17 @@ var hideable_billing_form = $('.hideable_billing_form');
 var use_default_shipping = document.querySelector("input[name=use_default_shipping]");
 var use_default_billing = document.querySelector("input[name=use_default_billing]");
 
+var billing_address_same_as_shipping = document.querySelector("input[name=same_billing_address]");
+
+billing_address_same_as_shipping.addEventListener('change', function() {
+  if (this.checked) {
+    hideable_billing_form.hide();
+  } else {
+    hideable_billing_form.show();
+  }
+});
+
+
 use_default_shipping.addEventListener('change', function() {
   if (this.checked) {
     hideable_shipping_form.hide();

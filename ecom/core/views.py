@@ -12,8 +12,8 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView, DetailView
 
-from .forms import CheckoutForm, CouponForm, RefundForm
-from .models import Item, OrderItem, Order, Address, Payment, Coupon, Refund
+from .forms import CheckoutForm, CouponForm, RefundForm, PaymentForm
+from .models import Item, OrderItem, Order, Address, Payment, Coupon, Refund, UserProfile
 
 import stripe
 
@@ -217,11 +217,61 @@ class CheckoutView(View):
                 else:
                     messages.info(
                         self.request, "Please fill in the required shipping address fields")
+                use_default_billing = form.cleaned_data.get(
+                    'use_default_billing')
+                same_billing_address = form.cleaned_data.get(
+                    'same_billing_address')
+                if same_billing_address:
+                    billing_address = shipping_address
+                    billing_address.pk = None
+                    billing_address.save()
+                    billing_address.address_type = 'B'
+                    billing_address.save()
+                    order.billing_address = billing_address
+                    order.save()
+                elif use_default_billing:
+                    print("Using the defualt billing address")
+                    address_qs = Address.objects.filter(
+                        user=self.request.user,
+                        address_type='B',
+                        default=True
+                    )
+                    if address_qs.exists():
+                        billing_address = address_qs[0]
+                        order.billing_address = billing_address
+                        order.save()
+                    else:
+                        messages.info(
+                            self.request, "No default billing address available")
+                        return redirect('core:checkout')
 
-                billing_address.save()
-                order.billing_address = billing_address
-                order.save()
+                billing_address = form.cleaned_data.get('billing_address')
+                billing_address2 = form.cleaned_data.get(
+                    'billing_address2')
+                billing_country = form.cleaned_data.get(
+                    'billing_country')
+                billing_zip = form.cleaned_data.get('billing_zip')
 
+                if is_valid_form([billing_address, billing_country, billing_zip]):
+                    billing_address = Address(
+                        user=self.request.user,
+                        street_address=billing_address,
+                        apartment_address=billing_address2,
+                        country=billing_country,
+                        zip=billing_zip,
+                        address_type='B'
+                    )
+                    billing_address.save()
+
+                    order.billing_address = billing_address
+                    order.save()
+
+                    set_default_billing = form.cleaned_data.get(
+                        'set_default_billing')
+                    if set_default_billing:
+                        billing_address.default = True
+                        billing_address.save()
+                payment_options = form.cleaned_data.get('payment_option')
                 if payment_options == 'S':
                     return redirect('core:payment', payment_option="stripe")
                 elif payment_options == 'P':
@@ -260,6 +310,18 @@ class PaymentView(View):
                 'order': order,
                 'DISPLAY_COUPON_FORM': False
             }
+            user_profile = self.request.user.userprofile
+            if user_profile.one_click_purchasing:
+                cards = stripe.Customer.list_sources(
+                    user_profile.stripe_customer_id,
+                    limit=3,
+                    object='card'
+                )
+
+                card_list = cards['data']
+                if len(card_list) > 0:
+                    context.update({'card': card_list[0]})  # first card in the list
+
             return render(self.request, 'payment-page.html', context)
         else:
             messages.warning(self.request, "You have not added a billing address")
@@ -267,55 +329,85 @@ class PaymentView(View):
 
     def post(self, *args, **kwargs):
         order = Order.objects.get(user=self.request.user, ordered=False)
-        token = self.request.POST.get('stripeToken')
-        amount = int(order.get_total() * 100)
-        try:
-            charge = stripe.Charge.create(
-                amount=amount,
-                currency="usd",
-                source=token
-            )
-            payment = Payment()
-            payment.stripe_charge_id = charge['id']
-            payment.user = self.request.user
-            payment.amount = order.get_total()
-            payment.save()
+        form = PaymentForm(self.request.POST)
+        userprofile = UserProfile.objects.get(user=self.request.user)
 
-            order_items = order.items.all()
-            order_items.update(ordered=True)
-            for item in order_items:
-                item.save()
+        if form.is_valid():
+            token = self.request.POST.get('stripeToken')
+            save = form.cleaned_data.get('save')
+            use_default = form.cleaned_data.get('use_default')
 
-            order.ordered = True
-            order.payment = payment
-            order.ref_code = create_ref_code()
-            order.save()
+            if save:
+                if not userprofile.stripe_customer_id:
+                    customer = stripe.Customer.create(
+                        email=self.request.user.email,
+                        source=token
+                    )
+                    userprofile.stripe_customer_id = customer['id']
+                    userprofile.one_click_purchasing = True
+                    userprofile.save()
+                else:
+                    stripe.Customer.create_source(
+                        userprofile.stripe_customer_id,
+                        source=token
+                    )
 
-        except stripe.error.CardError as e:
-            body = e.json_body
-            err = body.get('error', {})
-            messages.warning(self.request, f"{err.get('message')}")
-            return redirect('core:checkout')
-        except stripe.error.RateLimitError as e:
-            messages.warning(self.request, "Rate limit error")
-            return redirect('core:checkout')
-        except stripe.error.InvalidRequestError as e:
-            messages.warning(self.request, "Invalid parameters")
-            return redirect('core:checkout')
-        except stripe.error.AuthenticationError as e:
-            messages.warning(self.request, "Not authenticated")
-            return redirect('core:checkout')
-        except stripe.error.APIConnectionError as e:
-            messages.warning(self.request, "Network error")
-            return redirect('core:checkout')
-        except stripe.error.StripeError as e:
-            messages.warning(self.request, "Something went wrong. You were not charged. Please try again")
-            return redirect('core:checkout')
-        except Exception as e:
-            messages.warning(self.request, "A serious error occurred. We have been notified")
-            return redirect('core:checkout')
-        messages.success(self.request, "Payment successful")
-        return redirect('core:home')
+            amount = int(order.get_total() * 100)
+            try:
+                if use_default:
+                        charge = stripe.Charge.create(
+                            amount=amount,
+                            currency="usd",
+                            customer=userprofile.stripe_customer_id
+                        )
+                else:
+                    charge = stripe.Charge.create(
+                        amount=amount,
+                        currency="usd",
+                        source=token
+                    )
+
+                payment = Payment()
+                payment.stripe_charge_id = charge['id']
+                payment.user = self.request.user
+                payment.amount = order.get_total()
+                payment.save()
+
+                order_items = order.items.all()
+                order_items.update(ordered=True)
+                for item in order_items:
+                    item.save()
+
+                order.ordered = True
+                order.payment = payment
+                order.ref_code = create_ref_code()
+                order.save()
+
+            except stripe.error.CardError as e:
+                body = e.json_body
+                err = body.get('error', {})
+                messages.warning(self.request, f"{err.get('message')}")
+                return redirect('core:checkout')
+            except stripe.error.RateLimitError as e:
+                messages.warning(self.request, "Rate limit error")
+                return redirect('core:checkout')
+            except stripe.error.InvalidRequestError as e:
+                messages.warning(self.request, "Invalid parameters")
+                return redirect('core:checkout')
+            except stripe.error.AuthenticationError as e:
+                messages.warning(self.request, "Not authenticated")
+                return redirect('core:checkout')
+            except stripe.error.APIConnectionError as e:
+                messages.warning(self.request, "Network error")
+                return redirect('core:checkout')
+            except stripe.error.StripeError as e:
+                messages.warning(self.request, "Something went wrong. You were not charged. Please try again")
+                return redirect('core:checkout')
+            except Exception as e:
+                messages.warning(self.request, "A serious error occurred. We have been notified")
+                return redirect('core:checkout')
+            messages.success(self.request, "Payment successful")
+            return redirect('core:home')
 
 
 def get_coupon(request, code):
