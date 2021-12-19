@@ -19,4 +19,5 @@ simplejson==3.17.2
 stripe==2.63.0
 django-environ
 psycopg2-binary
+gunicorn==20.1.0
 

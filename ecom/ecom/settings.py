@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 import os
+import django_heroku
 from pathlib import Path
 import environ
 
@@ -27,7 +28,7 @@ SECRET_KEY = 'django-insecure-23^$y@ua%-*t10v-&n5)q))sdq+a7a@up4d=)ntfkvjv3@jz!%
 STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["kenjoeldjangoecommerce"]
 
@@ -151,3 +152,4 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 LOGIN_REDIRECT_URL = '/'
+django_heroku.settings(locals())
