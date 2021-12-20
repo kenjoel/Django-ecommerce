@@ -8,7 +8,11 @@ alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PA
 # Unset irrelevant variables.
 deactivate nondestructive
 
+<<<<<<< HEAD
 setenv VIRTUAL_ENV "/home/ken/Desktop/ecom/env"
+=======
+setenv VIRTUAL_ENV "/home/ken/PycharmProjects/Django-ecommerce/env"
+>>>>>>> 99707698826d25cfcd873217aab11d8dea01c4f7
 
 set _OLD_VIRTUAL_PATH="$PATH"
 setenv PATH "$VIRTUAL_ENV/bin:$PATH"

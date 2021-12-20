@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+  <style type="text/css">
+    html,
+    body,
+    header,
+    .carousel {
+      height: 60vh;
+    }
+
+    @media (max-width: 740px) {
+
+      html,
+      body,
+      header,
+      .carousel {
+        height: 100vh;
+      }
+    }
+
+    @media (min-width: 800px) and (max-width: 850px) {
+
+      html,
+      body,
+      header,
+      .carousel {
+        height: 100vh;
+      }
+    }
+
+  </style>
+
+  <main>
+    <div class="container">
+      <div class="table-responsive">
+        <h2>Request Refund</h2>
+        <form method="post">
+          {% csrf_toke %}
+          {{form|crispy}}
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+
+</div>
+
+    </div>
+  </main>
+{% endblock %}
+

@@ -37,7 +37,11 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
+<<<<<<< HEAD
 VIRTUAL_ENV="/home/ken/Desktop/ecom/env"
+=======
+VIRTUAL_ENV="/home/ken/PycharmProjects/Django-ecommerce/env"
+>>>>>>> 99707698826d25cfcd873217aab11d8dea01c4f7
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
