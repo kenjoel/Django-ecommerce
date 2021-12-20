@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-23^$y@ua%-*t10v-&n5)q))sdq+a7a@up4d=)ntfkvjv3@jz!%'
+SECRET_KEY = env("SECRET_KEY")
 STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -90,11 +90,11 @@ WSGI_APPLICATION = 'ecom.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'det03rdtamioki',
-        'USER': 'jgwncbhyitnvoh',
-        'PASSWORD': 'b492668ab84d33f7e36722551db2dfc6b128c9adcedf0bdff45280d689e7f36e',
-        'HOST': 'ec2-3-210-29-54.compute-1.amazonaws.com',  # change this to db when using docker compose up
-        'PORT': '5432'
+        'NAME': env("NAME"),
+        'USER': env("USER"),
+        'PASSWORD': env("PASSWORD"),
+        'HOST': env("HOST"),  # change this to db when using docker compose up
+        'PORT': env("PORT")
     }
 }
 
