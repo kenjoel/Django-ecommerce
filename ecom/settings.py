@@ -90,11 +90,11 @@ WSGI_APPLICATION = 'ecom.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': env("NAME"),
-        'USER': env("USER"),
-        'PASSWORD': env("PASSWORD")',
-        'HOST': env("HOST"),  # change this to db when using docker compose up
-        'PORT': env("PORT")
+        'NAME': 'det03rdtamioki',
+        'USER': 'jgwncbhyitnvoh',
+        'PASSWORD': 'b492668ab84d33f7e36722551db2dfc6b128c9adcedf0bdff45280d689e7f36e',
+        'HOST': 'ec2-3-210-29-54.compute-1.amazonaws.com',  # change this to db when using docker compose up
+        'PORT': '5432'
     }
 }
 
