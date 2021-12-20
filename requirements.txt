@@ -21,4 +21,4 @@ stripe==2.63.0
 django-environ
 psycopg2
 gunicorn==20.1.0
-
+whitenoise
