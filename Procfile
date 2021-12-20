@@ -1,1 +1,1 @@
-web: gunicorn ecom.wsgi--capture-output
+web: gunicorn ecom.wsgi --capture-output
