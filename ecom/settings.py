@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 import os
 from pathlib import Path
 import environ
+import django_heroku
 
 
 env = environ.Env()
@@ -153,3 +154,4 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 LOGIN_REDIRECT_URL = '/'
 
+django_heroku.settings(locals())
