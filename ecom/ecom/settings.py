@@ -10,9 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 import os
-import django_heroku
 from pathlib import Path
 import environ
+import django_heroku
+
 
 env = environ.Env()
 environ.Env.read_env()
@@ -30,7 +31,7 @@ STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["kenjoeldjangoecommerce"]
+ALLOWED_HOSTS = ["kenjoeldjangoecommerce", "127.0.0.1"]
 
 # Application definition
 
@@ -140,7 +141,7 @@ AUTHENTICATION_BACKENDS = [
 
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static_in_env')]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'staticfiles')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_root')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media_root')
 
@@ -152,4 +153,5 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 LOGIN_REDIRECT_URL = '/'
-django_heroku.settings(locals())
+django_heroku.settings(locals())   # this line is required to use django_heroku in settings.py file
+
